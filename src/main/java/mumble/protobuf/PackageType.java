@@ -1,49 +1,58 @@
 package mumble.protobuf;
 
+import MumbleProto.Mumble;
+
 public enum PackageType {
-    Version(0),
-    UDPTunnel(1),
-    Authenticate(2),
-    Ping(3),
-    Reject(4),
-    ServerSync(5),
-    ChannelRemove(6),
-    ChannelState(7),
-    UserRemove(8),
-    UserState(9),
-    BanList(10),
-    TextMessage(11),
-    PermissionDenied(12),
-    ACL(13),
-    QueryUsers(14),
-    CryptSetup(15),
-    ContextActionModify(16),
-    ContextAction(17),
-    UserList(18),
-    VoiceTarget(19),
-    PermissionQuery(20),
-    CodecVersion(21),
-    UserStats(22),
-    RequestBlob(23),
-    ServerConfig(24),
-    SuggestConfig(25),
-    Unknown(9999);
+    Version(0, Mumble.Version.class),
+    UDPTunnel(1, Mumble.UDPTunnel.class),
+    Authenticate(2, Mumble.Authenticate.class),
+    Ping(3, Mumble.Ping.class),
+    Reject(4, Mumble.Reject.class),
+    ServerSync(5, Mumble.ServerSync.class),
+    ChannelRemove(6, Mumble.ChannelRemove.class),
+    ChannelState(7, Mumble.ChannelState.class),
+    UserRemove(8, Mumble.UserRemove.class),
+    UserState(9, Mumble.UserState.class),
+    BanList(10, Mumble.BanList.class),
+    TextMessage(11, Mumble.TextMessage.class),
+    PermissionDenied(12, Mumble.PermissionDenied.class),
+    ACL(13, Mumble.ACL.class),
+    QueryUsers(14, Mumble.QueryUsers.class),
+    CryptSetup(15, Mumble.CryptSetup.class),
+    ContextActionModify(16, Mumble.ContextActionModify.class),
+    ContextAction(17, Mumble.ContextAction.class),
+    UserList(18, Mumble.UserList.class),
+    VoiceTarget(19, Mumble.VoiceTarget.class),
+    PermissionQuery(20, Mumble.PermissionQuery.class),
+    CodecVersion(21, Mumble.CodecVersion.class),
+    UserStats(22, Mumble.UserStats.class),
+    RequestBlob(23, Mumble.RequestBlob.class),
+    ServerConfig(24, Mumble.ServerConfig.class),
+    SuggestConfig(25, Mumble.SuggestConfig.class),
+    Unknown(9999, Object.class);
 
     private final int id;
+    private final Class<?> clazz;
 
-    PackageType(int id) {
+    PackageType(int id, Class<?> clazz) {
         this.id = id;
+        this.clazz = clazz;
     }
 
     public int getId() {
         return id;
     }
 
+    public Class<?> getClazz() {
+        return clazz;
+    }
+
     public static PackageType getTypeById(int id) {
         switch (id) {
             case 0: return Version;
-            case 1: return Authenticate;
-            case 2: return Ping;
+            case 1: return UDPTunnel;
+            case 2: return Authenticate;
+            case 3: return Ping;
             case 4: return Reject;
             case 5: return ServerSync;
             case 6: return ChannelRemove;

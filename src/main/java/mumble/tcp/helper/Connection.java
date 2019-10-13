@@ -1,31 +1,28 @@
 package mumble.tcp.helper;
 
-import MumbleProto.Mumble;
-import org.checkerframework.checker.nullness.Opt;
+import com.google.protobuf.MessageLite;
+import mumble.protobuf.PackageType;
+import mumble.protobuf.container.Message;
 
 import javax.net.ssl.*;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-public class Connection {
+public class Connection implements Runnable {
     private SSLSocket socket;
     private MessageReciever reciever;
     private MessageSender sender;
     private String error = null;
     private Lock pingLock = new ReentrantLock();
     private long lastPing = 0;
-    private List<Consumer<Mumble.TextMessage>> textMessageListener = new ArrayList<>();
+    private Map<PackageType, List<Consumer<MessageLite>>> textMessageListener = new ConcurrentHashMap<>();
 
     public Connection(String domain, int port) {
         TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
@@ -55,6 +52,7 @@ public class Connection {
         } catch (IOException | NoSuchAlgorithmException | KeyManagementException e) {
             error = e.toString();
         }
+        new Thread(this).start();
     }
 
     public Optional<String> getError() {
@@ -83,7 +81,20 @@ public class Connection {
         }
     }
 
-    public void addTextMessageListener(Consumer<Mumble.TextMessage> messageListener) {
-        textMessageListener.add(messageListener);
+    public void on(PackageType type, Consumer<MessageLite> messageListener) {
+        textMessageListener.computeIfAbsent(type, k -> new ArrayList<>());
+        textMessageListener.get(type).add(messageListener);
+    }
+
+    @Override
+    public void run() {
+        while(true) {
+            Message lastMessage = reciever.getLastMessage();
+            System.out.println("Broadcasting: " + PackageType.getTypeById(lastMessage.getId()));
+            List<Consumer<MessageLite>> list = textMessageListener.get(PackageType.getTypeById(lastMessage.getId()));
+            if (list != null) {
+                list.forEach(e -> e.accept(lastMessage.getMessage()));
+            }
+        }
     }
 }
