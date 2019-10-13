@@ -10,8 +10,6 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class MessageSender implements Runnable{
     private OutputStream outputStream;
@@ -42,7 +40,7 @@ public class MessageSender implements Runnable{
         addToQueue(PackageType.Authenticate, auth.build());
     }
 
-    private void addToQueue(PackageType id, MessageLite message) {
+    public void addToQueue(PackageType id, MessageLite message) {
         try {
             output.put(new Message(id, message));
         } catch (InterruptedException e) {

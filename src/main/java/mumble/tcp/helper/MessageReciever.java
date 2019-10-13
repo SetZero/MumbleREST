@@ -23,15 +23,21 @@ public class MessageReciever implements Runnable{
         this.inputStream = inputStream;
     }
 
+    public static int unsignedToBytes(byte b) {
+        return b & 0xFF;
+    }
+
     private Message getMessage() throws IOException {
         byte[] metadata = inputStream.readNBytes(6);
+
+
         if(metadata.length >= 6) {
             short id = (short) ((metadata[0] << 8) |
                     (metadata[1]));
-            int length = (metadata[2] << 24) |
-                    (metadata[3] << 16) |
-                    (metadata[4] << 8) |
-                    metadata[5];
+            int length = (unsignedToBytes(metadata[2]) << 24) |
+                            (unsignedToBytes(metadata[3]) << 16) |
+                            (unsignedToBytes(metadata[4]) << 8) |
+                            unsignedToBytes(metadata[5]);
             return parseMessage(inputStream.readNBytes(length), id);
         } else {
             return null;
