@@ -4,6 +4,7 @@ import com.google.protobuf.MessageLite;
 import mumble.protobuf.PackageType;
 import mumble.protobuf.container.Message;
 import mumble.tcp.helper.classes.ChannelManager;
+import mumble.tcp.helper.classes.TextManager;
 import mumble.tcp.helper.classes.UserManager;
 
 import javax.net.ssl.*;
@@ -28,6 +29,7 @@ public class Connection implements Runnable {
 
     private ChannelManager channelManager;
     private UserManager userManager;
+    private TextManager textManager;
 
     public Connection(String domain, int port) {
         try {
@@ -68,6 +70,7 @@ public class Connection implements Runnable {
         sender = new MessageSender(socket.getOutputStream());
 
         channelManager =  new ChannelManager(sender, this);
+        textManager =  new TextManager(sender, this);
         userManager = new UserManager();
 
         new Thread(reciever).start();
@@ -122,5 +125,9 @@ public class Connection implements Runnable {
 
     public UserManager getUserManager() {
         return userManager;
+    }
+
+    public TextManager getTextManager() {
+        return textManager;
     }
 }

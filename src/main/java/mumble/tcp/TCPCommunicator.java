@@ -28,13 +28,21 @@ public class TCPCommunicator implements Runnable {
             connection.authenticate("Y0GURT");
             connection.on(PackageType.TextMessage, (textMessage) -> onTextMessage(connection, textMessage));
             connection.on(PackageType.ServerSync, e -> switchChannel(connection));
+            connection.on(PackageType.ServerSync, e -> writeMessage(connection));
         });
     }
 
     private void switchChannel(Connection connection) {
         Collection<Mumble.UserState> users = connection.getUserManager().getUsers();
-        for(Mumble.UserState user : users) {
+        /*for(Mumble.UserState user : users) {
             connection.getChannelManager().switchChannel(user.getChannelId());
+        }*/
+    }
+
+    private void writeMessage(Connection connection) {
+        Collection<Mumble.UserState> users = connection.getUserManager().getUsers();
+        for(Mumble.UserState user: users) {
+            connection.getTextManager().writeMessageToUser(user.getSession());
         }
     }
 
