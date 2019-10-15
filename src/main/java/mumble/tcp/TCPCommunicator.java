@@ -42,7 +42,9 @@ public class TCPCommunicator implements Runnable {
     private void switchChannel(Connection connection) {
         Collection<Mumble.UserState> users = connection.getUserManager().getUsers();
         for(Mumble.UserState user : users) {
-            connection.getChannelManager().switchChannel(user.getChannelId());
+            if(user.getSession() != connection.getUserManager().getMySessionID()) {
+                connection.getChannelManager().switchChannel(user.getChannelId());
+            }
         }
     }
 

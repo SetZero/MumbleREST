@@ -25,6 +25,7 @@ public class UserManager {
     public void acceptStateChange(Message e) {
         if(e.getMessage() instanceof Mumble.UserState) {
             Mumble.UserState userState = (Mumble.UserState) e.getMessage();
+            System.out.println("User: " + userState.getSession() + ", " + userState.getName());
             userMap.put(userState.getSession(), userState);
             //TODO: This can also be a mute / etc.
             //System.out.println("User Changed State: " + userState.getName() + ", " + userState.getSession());

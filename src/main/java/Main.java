@@ -9,7 +9,7 @@ public class Main {
         System.out.println("Hello World");
         //HTTPServer server = new HTTPServer(8080, true);
         //server.start();
-        TCPCommunicator communicator = new TCPCommunicator("nooblounge.net", 64738);
+        TCPCommunicator communicator = new TCPCommunicator("127.0.0.1", 64738);
         Thread t = new Thread(communicator);
         t.start();
         t.join();
