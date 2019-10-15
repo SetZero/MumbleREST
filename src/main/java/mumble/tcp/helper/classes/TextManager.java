@@ -14,12 +14,11 @@ public class TextManager {
         this.sender = sender;
     }
 
-    public void writeMessageToUser(int user) {
+    public void writeMessageToUser(int user, String message) {
         Mumble.TextMessage.Builder textMesage = Mumble.TextMessage.newBuilder();
-        textMesage.setMessage("Hello World!");
+        textMesage.setMessage(message);
         textMesage.setActor(connection.getUserManager().getMySessionID());
         textMesage.addSession(user);
-        System.out.println("Send Message");
         sender.addToQueue(PackageType.TextMessage, textMesage.build());
     }
 }

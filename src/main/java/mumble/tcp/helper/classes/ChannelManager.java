@@ -3,6 +3,7 @@ package mumble.tcp.helper.classes;
 import MumbleProto.Mumble;
 import com.google.protobuf.MessageLite;
 import mumble.protobuf.PackageType;
+import mumble.protobuf.container.Message;
 import mumble.tcp.helper.Connection;
 import mumble.tcp.helper.MessageSender;
 
@@ -19,9 +20,9 @@ public class ChannelManager {
         this.connection = connection;
     }
 
-    public void acceptStateChange(MessageLite e) {
-        if(e instanceof Mumble.ChannelState) {
-            Mumble.ChannelState channelState = (Mumble.ChannelState) e;
+    public void acceptStateChange(Message e) {
+        if(e.getMessage() instanceof Mumble.ChannelState) {
+            Mumble.ChannelState channelState = (Mumble.ChannelState) e.getMessage();
 
             channelMap.put(channelState.getChannelId(), channelState);
             System.out.println("New Channel: " + channelState.getName() + "(" + channelState.getChannelId() + ")");

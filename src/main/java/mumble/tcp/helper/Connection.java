@@ -6,6 +6,7 @@ import mumble.protobuf.container.Message;
 import mumble.tcp.helper.classes.ChannelManager;
 import mumble.tcp.helper.classes.TextManager;
 import mumble.tcp.helper.classes.UserManager;
+import mumble.udp.VoiceConnection;
 
 import javax.net.ssl.*;
 import java.io.IOException;
@@ -25,22 +26,26 @@ public class Connection implements Runnable {
     private String error = null;
     private Lock pingLock = new ReentrantLock();
     private long lastPing = 0;
-    private Map<PackageType, List<Consumer<MessageLite>>> textMessageListener = new ConcurrentHashMap<>();
+    private Map<PackageType, List<Consumer<Message>>> textMessageListener = new ConcurrentHashMap<>();
 
     private ChannelManager channelManager;
     private UserManager userManager;
     private TextManager textManager;
+
+    private VoiceConnection voiceConnection;
 
     public Connection(String domain, int port) {
         try {
             connect(domain, port);
 
             sender.sendVersion();
+            voiceConnection = new VoiceConnection(domain, port);
 
             on(PackageType.ChannelState, e -> channelManager.acceptStateChange(e));
             on(PackageType.UserState, e -> userManager.acceptStateChange(e));
             on(PackageType.UserRemove, e -> userManager.acceptUserRemove(e));
             on(PackageType.ServerSync, e -> userManager.acceptServerSync(e));
+            on(PackageType.UDPTunnel, e -> voiceConnection.parseUDP(e));
 
         } catch (IOException | NoSuchAlgorithmException | KeyManagementException e) {
             error = e.toString();
@@ -71,7 +76,7 @@ public class Connection implements Runnable {
 
         channelManager =  new ChannelManager(sender, this);
         textManager =  new TextManager(sender, this);
-        userManager = new UserManager();
+        userManager = new UserManager(sender, this);
 
         new Thread(reciever).start();
         new Thread(sender).start();
@@ -102,7 +107,7 @@ public class Connection implements Runnable {
         }
     }
 
-    public void on(PackageType type, Consumer<MessageLite> messageListener) {
+    public void on(PackageType type, Consumer<Message> messageListener) {
         textMessageListener.computeIfAbsent(type, k -> new ArrayList<>());
         textMessageListener.get(type).add(messageListener);
     }
@@ -112,9 +117,9 @@ public class Connection implements Runnable {
         while(true) {
             Message lastMessage = reciever.getLastMessage();
             System.out.println("Broadcasting: " + PackageType.getTypeById(lastMessage.getId()));
-            List<Consumer<MessageLite>> list = textMessageListener.get(PackageType.getTypeById(lastMessage.getId()));
+            List<Consumer<Message>> list = textMessageListener.get(PackageType.getTypeById(lastMessage.getId()));
             if (list != null) {
-                list.forEach(e -> e.accept(lastMessage.getMessage()));
+                list.forEach(e -> e.accept(lastMessage));
             }
         }
     }

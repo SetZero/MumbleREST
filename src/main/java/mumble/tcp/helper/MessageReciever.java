@@ -48,17 +48,21 @@ public class MessageReciever implements Runnable{
         PackageType mID = PackageType.getTypeById(id);
         MessageLite message;
 
+        if(mID == PackageType.UDPTunnel) {
+            return new Message(mID, data);
+        }
+
         try {
             Method method = mID.getClazz().getMethod("parseFrom", byte[].class);
             Object obj = method.invoke(null, data);
             if(obj instanceof MessageLite) {
                 message = (MessageLite) obj;
-                return new Message(mID, message);
+                return new Message(mID, message, data);
             }
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             Log.get().log(Level.WARN, "MESSAGE: " + mID + ", ID: " + id);
         }
-        return new Message(mID, null);
+        return new Message(mID, null, data);
     }
 
     @Override
