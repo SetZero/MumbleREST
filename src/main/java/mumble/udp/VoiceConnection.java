@@ -1,18 +1,23 @@
 package mumble.udp;
 
 import mumble.protobuf.container.Message;
+import org.apache.commons.lang3.ArrayUtils;
 import org.concentus.*;
 import utils.audio.PCMPlayer;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class VoiceConnection implements Runnable {
     private DatagramSocket socket;
     private byte[] data = new byte[1024];
     private String domain;
     private int port;
+    private List<Byte> buffer = new ArrayList<>();
 
     public VoiceConnection(String domain, int port) {
         this.domain = domain;
@@ -23,7 +28,9 @@ public class VoiceConnection implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        new Thread(this).start();
+        Thread t = new Thread(this);
+        t.setPriority(Thread.MAX_PRIORITY);
+        t.start();
     }
 
     public static long unsignedToBytes(byte b) {
@@ -50,14 +57,21 @@ public class VoiceConnection implements Runnable {
         short[] pcmData = decodeOpus(data, 0,data.length);
         PCMPlayer player = new PCMPlayer();
         player.play(ShortToByte_Twiddle_Method(pcmData));
-        //System.out.println(Arrays.toString(pcmData));
 
         /*System.out.println("\nType: " + type);
         System.out.println("Target: " + target);
         System.out.println("User ID: " + info.value);
         System.out.println("Seq Num: " + seq.value);
-        System.out.println("Opus Length: " + (opusHeaderInfo.value & 0x1FFF));
-        System.out.println("Last Frame: " + ((opusHeaderInfo.value & 0x2000) != 0));*/
+        System.out.println("Opus Length: " + (opusHeaderInfo.value & 0x1FFF)); */
+        /*buffer.addAll(Arrays.asList(ArrayUtils.toObject(ShortToByte_Twiddle_Method(pcmData))));
+        if(((opusHeaderInfo.value & 0x2000) != 0)) {
+            System.out.println("Last Frame: " + ((opusHeaderInfo.value & 0x2000) != 0));
+            Byte[] bufferArr = new Byte[buffer.size()];
+            bufferArr = buffer.toArray(bufferArr);
+            byte[] arr = ArrayUtils.toPrimitive(bufferArr);
+            player.play(arr);
+            buffer.clear();
+        }*/
     }
 
     private byte [] ShortToByte_Twiddle_Method(short [] input)
@@ -71,8 +85,8 @@ public class VoiceConnection implements Runnable {
 
         for(/*NOP*/; short_index != iterations; /*NOP*/)
         {
-            buffer[byte_index]     = (byte) (input[short_index] & 0x00FF);
-            buffer[byte_index + 1] = (byte) ((input[short_index] & 0xFF00) >> 8);
+            buffer[byte_index]     = (byte) ((input[short_index] & 0x00FF));
+            buffer[byte_index + 1] = (byte) (((input[short_index] & 0xFF00) >> 8));
 
             ++short_index; byte_index += 2;
         }
