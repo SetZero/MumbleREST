@@ -1,11 +1,12 @@
 package mumble.udp;
 
-import mumble.protobuf.PackageType;
 import mumble.protobuf.container.Message;
-import org.restcomm.media.codec.opus.OpusJni;
+import org.concentus.*;
+import utils.audio.PCMPlayer;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
+import java.util.Arrays;
 
 public class VoiceConnection implements Runnable {
     private DatagramSocket socket;
@@ -31,20 +32,52 @@ public class VoiceConnection implements Runnable {
 
     public void parseUDP(Message e) {
         byte[] raw = e.getRaw();
-        int type = (raw[0] >> 5) & 3;
+        String type = Integer.toBinaryString((raw[0] >> 5) & 4);
         int target = raw[0] & 0x1F;
         int offset = 1;
         PackageInfo info = readVarInt(raw, offset);
         offset += info.readBytes;
         PackageInfo seq = readVarInt(raw, offset);
         offset += seq.readBytes;
-        long OpusHeaderSize = unsignedToBytes(raw[offset]);
+        PackageInfo opusHeaderInfo = readVarInt(raw, offset);
+        offset += opusHeaderInfo.readBytes; // 16 bit varint
+        int opusDataLength = (int) (opusHeaderInfo.value & 0x1FFF);
 
-        System.out.println("Type: " + type);
+        byte[] data = new byte[opusDataLength];
+        for(int i = offset, j=0; i < opusDataLength + offset; i++, j++) {
+            data[j] = raw[i];
+        }
+        short[] pcmData = decodeOpus(data, 0,data.length);
+        PCMPlayer player = new PCMPlayer();
+        player.play(ShortToByte_Twiddle_Method(pcmData));
+        //System.out.println(Arrays.toString(pcmData));
+
+        /*System.out.println("\nType: " + type);
         System.out.println("Target: " + target);
         System.out.println("User ID: " + info.value);
         System.out.println("Seq Num: " + seq.value);
-        System.out.println("Opus Length: " + OpusHeaderSize);
+        System.out.println("Opus Length: " + (opusHeaderInfo.value & 0x1FFF));
+        System.out.println("Last Frame: " + ((opusHeaderInfo.value & 0x2000) != 0));*/
+    }
+
+    private byte [] ShortToByte_Twiddle_Method(short [] input)
+    {
+        int short_index, byte_index;
+        int iterations = input.length;
+
+        byte [] buffer = new byte[input.length * 2];
+
+        short_index = byte_index = 0;
+
+        for(/*NOP*/; short_index != iterations; /*NOP*/)
+        {
+            buffer[byte_index]     = (byte) (input[short_index] & 0x00FF);
+            buffer[byte_index + 1] = (byte) ((input[short_index] & 0xFF00) >> 8);
+
+            ++short_index; byte_index += 2;
+        }
+
+        return buffer;
     }
 
     private PackageInfo readVarInt(byte[] data, int offset) {
@@ -53,7 +86,6 @@ public class VoiceConnection implements Runnable {
                     unsignedToBytes((byte) (data[offset] & 0b01111111)),
                     1);
         } else if ((data[offset] & 0b11000000) >> 6 == 0b10) {
-            System.out.println("1 byte");
             return new PackageInfo(
                     unsignedToBytes((byte) (data[offset] & 0b00111111)) << 8 |
                             unsignedToBytes(data[1 + offset]),
@@ -93,6 +125,17 @@ public class VoiceConnection implements Runnable {
         }
         //TODO
         return new PackageInfo(0, 0);
+    }
+
+    private short[] decodeOpus(byte[] raw, int offset, int celtDataLength) {
+        short[] output = new short[celtDataLength*12];
+        try {
+            OpusDecoder decoder = new OpusDecoder(48000, 2);
+            decoder.decode(raw, offset, celtDataLength, output, 0, output.length, false);
+        } catch (OpusException e) {
+            e.printStackTrace();
+        }
+        return output;
     }
 
     @Override

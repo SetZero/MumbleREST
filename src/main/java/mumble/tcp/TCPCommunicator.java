@@ -29,9 +29,20 @@ public class TCPCommunicator implements Runnable {
             connection.authenticate("Y0GURT");
             connection.on(PackageType.TextMessage, (textMessage) -> onTextMessage(connection, textMessage));
             connection.on(PackageType.ServerSync, e -> switchChannel(connection));
+            connection.on(PackageType.CodecVersion, e -> outputCodec(connection, e));
             //connection.on(PackageType.ServerSync, e -> selfMute(connection));
             //connection.on(PackageType.ServerSync, e -> writeMessage(connection));
         });
+    }
+
+    private void outputCodec(Connection connection, Message codecInfo) {
+        if(codecInfo.getMessage() instanceof Mumble.CodecVersion) {
+            Mumble.CodecVersion codec = (Mumble.CodecVersion) codecInfo.getMessage();
+            System.out.println("Opus: " + codec.getOpus());
+            System.out.println("Alpha: " + codec.getAlpha());
+            System.out.println("Beta: " + codec.getBeta());
+            System.out.println("Prefer Alpha: " + codec.getPreferAlpha());
+        }
     }
 
     private void selfMute(Connection connection) {

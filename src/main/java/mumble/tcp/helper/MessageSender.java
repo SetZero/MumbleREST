@@ -37,6 +37,9 @@ public class MessageSender implements Runnable{
     public void sendAuth(String username){
         Mumble.Authenticate.Builder auth = Mumble.Authenticate.newBuilder();
         auth.setUsername(username);
+        auth.setOpus(true);
+        auth.addCeltVersions(-2147483637);
+        auth.addCeltVersions(-2147483632);
         addToQueue(PackageType.Authenticate, auth.build());
     }
 

@@ -116,7 +116,7 @@ public class Connection implements Runnable {
     public void run() {
         while(true) {
             Message lastMessage = reciever.getLastMessage();
-            System.out.println("Broadcasting: " + PackageType.getTypeById(lastMessage.getId()));
+            //System.out.println("Broadcasting: " + PackageType.getTypeById(lastMessage.getId()));
             List<Consumer<Message>> list = textMessageListener.get(PackageType.getTypeById(lastMessage.getId()));
             if (list != null) {
                 list.forEach(e -> e.accept(lastMessage));
